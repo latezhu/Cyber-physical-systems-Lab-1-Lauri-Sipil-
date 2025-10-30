@@ -1,0 +1,112 @@
+void setup() {
+  Serial.begin(9600);
+  while (!Serial) {
+    ;
+  }
+  Serial.println("=== Arduino Calculator ===");
+  Serial.println("Enter calculation (e.g., 8 * 5, 10 + 3, 15 / 3, 20 - 7)");
+  Serial.println();
+}
+
+void loop() {
+  Serial.print("Enter calculation: ");
+  
+  while (Serial.available() == 0) {
+    ;
+  }
+  
+  delay(50);
+  
+  String input = Serial.readStringUntil('\n');
+  
+  input.trim();
+  
+  Serial.println(input);
+  
+  // NOTE: sscanf doesn't work reliably on MKR1010 with Arduino String objects
+  // Even using input.c_str() or converting to char array with toCharArray()
+  // may fail to parse correctly, returning parsed count of 1 instead of 3
+  // Therefore, we use manual string parsing instead
+  
+  int opIndex = -1;
+  char op = ' ';
+  
+  for (int i = 1; i < input.length(); i++) {
+    char c = input.charAt(i);
+    if (c == '+' || c == '-' || c == '*' || c == '/') {
+      opIndex = i;
+      op = c;
+      break;
+    }
+  }
+  
+  if (opIndex == -1) {
+    Serial.println("Error: No operator found. Use +, -, *, or /");
+    Serial.println("Example: 8 * 5");
+    Serial.println();
+    return;
+  }
+  
+  String num1Str = input.substring(0, opIndex);
+  String num2Str = input.substring(opIndex + 1);
+  
+  num1Str.trim();
+  num2Str.trim();
+  
+  float num1 = num1Str.toFloat();
+  float num2 = num2Str.toFloat();
+  
+  if (num1Str.length() == 0 || num2Str.length() == 0) {
+    Serial.println("Error: Invalid numbers");
+    Serial.println("Example: 8 * 5");
+    Serial.println();
+    return;
+  }
+  
+  float result;
+  bool validOperation = true;
+  
+  switch (op) {
+    case '+':
+      result = num1 + num2;
+      break;
+    case '-':
+      result = num1 - num2;
+      break;
+    case '*':
+      result = num1 * num2;
+      break;
+    case '/':
+      if (num2 == 0) {
+        Serial.println("Error: Division by zero!");
+        validOperation = false;
+      } else {
+        result = num1 / num2;
+      }
+      break;
+    default:
+      Serial.print("Error: Unknown operator '");
+      Serial.print(op);
+      Serial.println("'. Use +, -, *, or /");
+      validOperation = false;
+  }
+  
+  if (validOperation) {
+    Serial.print("Result: ");
+    Serial.print(num1);
+    Serial.print(" ");
+    Serial.print(op);
+    Serial.print(" ");
+    Serial.print(num2);
+    Serial.print(" = ");
+    Serial.println(result);
+  }
+  
+  Serial.println();
+  
+  while (Serial.available() > 0) {
+    Serial.read();
+  }
+  
+  delay(100);
+}
