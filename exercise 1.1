@@ -1,0 +1,21 @@
+const int ledPin = 6;     // LED on digital pin 6
+const int potPin = A1;    // Potentiometer on analog pin A1
+
+void setup() {
+  pinMode(ledPin, OUTPUT);
+  Serial.begin(9600);
+}
+
+void loop() {
+  digitalWrite(ledPin, HIGH);
+  delay(500);
+  digitalWrite(ledPin, LOW);
+  delay(500);
+
+  int potValue = analogRead(potPin);
+
+  Serial.print("Analog value: ");
+  Serial.println(potValue);
+
+  delay(1000); // once per second
+}
