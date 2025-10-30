@@ -1,0 +1,34 @@
+#include <WiFiNINA.h>
+
+void setup() {
+  Serial.begin(9600);
+  while (!Serial); // Fix: wait for Serial Monitor to connect
+  Serial.println("Starting Wi-Fi scan..."); // Added startup message
+}
+
+void loop() {
+  if (WiFi.status() == WL_NO_MODULE) {
+    Serial.println("WiFi module not found!");
+    while (true); // Fix: stop execution if module not found
+  }
+
+  Serial.println("Scanning available networks...");
+
+  int numNetworks = WiFi.scanNetworks(); // Fix: use int (not uint8_t) since scanNetworks() returns int
+
+  Serial.print("Number of available networks: "); // Added network count output
+  Serial.println(numNetworks);
+
+  for (int i = 0; i < numNetworks; i++) { // Fix: added variable name i and correct syntax
+    Serial.print("Network ");
+    Serial.print(i + 1);
+    Serial.print(": ");
+    Serial.print(WiFi.SSID(i));
+    Serial.print(" | Signal Strength: ");
+    Serial.print(WiFi.RSSI(i));
+    Serial.print(" dBm | Encryption: ");
+    Serial.println(WiFi.encryptionType(i));
+  }
+
+  delay(30000); // Fix: replaced three delay(10000) calls with one 30s delay
+}
