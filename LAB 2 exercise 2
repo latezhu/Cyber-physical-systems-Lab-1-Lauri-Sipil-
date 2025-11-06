@@ -1,0 +1,29 @@
+#include <avr/io.h>
+#include <avr/interrupt.h>
+
+// ISR for Pin Change Interrupt Request 0
+ISR(PCINT0_vect) {
+    // Check if PB0 (pin 8) is LOW
+    if (!(PINB & (1 << PB0))) {
+        
+        PORTB ^= (1 << PB5); //Toggle LED on PB5
+    }
+}
+
+int main(void) {
+
+    DDRB |= (1 << PB5);   // Output
+    PORTB &= ~(1 << PB5); // LED off
+
+    DDRB &= ~(1 << PB0);  // Input
+    PORTB |= (1 << PB0);  // Enable pull-up resistor
+
+    PCICR |= (1 << PCIE0);    // Enable PCINT for PORTB
+    PCMSK0 |= (1 << PCINT0);  // Enable interrupt for PB0
+
+ 
+    sei(); //Enable global interrupt
+
+    while (1) {
+    }
+}
