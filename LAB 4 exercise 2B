@@ -1,0 +1,49 @@
+#define F_CPU 16000000UL
+#include <avr/io.h>
+#include <util/delay.h>
+#include <stdint.h>
+
+static void adc_init(void)
+{
+	ADMUX = (1 << REFS0);
+	ADCSRA = (1 << ADEN) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
+}
+
+static uint16_t adc_read(uint8_t ch)
+{
+	ADMUX = (ADMUX & 0xF0) | (ch & 0x0F);
+	ADCSRA |= (1 << ADSC);
+	while (ADCSRA & (1 << ADSC));
+	return ADC;
+}
+
+int main(void)
+{
+	DDRB |= (1 << PB5);
+	PORTB &= ~(1 << PB5);
+	adc_init();
+
+	for (;;)
+	{
+		PORTB &= ~(1 << PB5);
+		_delay_ms(15000);
+
+		uint16_t pot = adc_read(0);
+		uint8_t pwm = (uint8_t)(pot >> 2);
+
+		const uint32_t period_us = 4096UL;
+		const uint32_t cycles = (5000000UL + period_us/2) / period_us;
+
+		for (uint32_t c = 0; c < cycles; ++c)
+		{
+			for (uint16_t t = 0; t < 256; ++t)
+			{
+				if (t < pwm) PORTB |= (1 << PB5);
+				else PORTB &= ~(1 << PB5);
+				_delay_us(16);
+			}
+		}
+
+		PORTB &= ~(1 << PB5);
+	}
+}
