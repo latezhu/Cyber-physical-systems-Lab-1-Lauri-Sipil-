@@ -1,0 +1,62 @@
+#include <avr/sleep.h>
+#include <avr/interrupt.h>
+
+const int potPin = A0;   // Analog input pin
+
+ISR(INT0_vect) {         // Wake-up ISR
+}
+
+void setup() {
+  Serial.begin(9600);
+  Serial.println("System starting");
+
+  cli();                          // Disable interrupts during setup
+
+  DDRC &= ~(1 << PC0);            // A0 input
+  DIDR0 |= (1 << ADC0D);          // Disable digital buffer on A0
+
+  DDRD &= ~(1 << PD2);            // D2 input
+  PORTD |= (1 << PD2);            // Pull-up on D2
+
+  EICRA |= (1 << ISC01);          // Falling-edge interrupt
+  EICRA &= ~(1 << ISC00);
+
+  EIMSK |= (1 << INT0);           // Enable INT0
+
+  sei();                          // Enable interrupts
+
+  Serial.println("Setup complete.");
+  Serial.println("Flip the switch to run the program");
+}
+
+void goToSleep() {
+
+  Serial.println("Switch is low. Going to sleep");
+  Serial.flush();
+
+  ADCSRA &= ~(1 << ADEN);                  // Disable ADC for lower power
+  set_sleep_mode(SLEEP_MODE_PWR_DOWN);     
+  sleep_enable();
+  sleep_cpu();                             
+
+  sleep_disable();
+  ADCSRA |= (1 << ADEN);                   // Re-enable ADC
+
+  Serial.println("Woke up");
+}
+
+void loop() {
+
+  if (!(PIND & (1 << PD2))) {              // If switch is high: run program
+
+    int potValue = analogRead(potPin);     // Read analog value
+
+    Serial.print("Pot value: ");
+    Serial.println(potValue);
+
+    delay(100);
+  } 
+  else {                                   // If switch is low: sleep
+    goToSleep();
+  }
+}
