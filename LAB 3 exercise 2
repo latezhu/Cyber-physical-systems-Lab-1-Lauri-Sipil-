@@ -1,0 +1,48 @@
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#include <avr/sleep.h>
+#include <util/delay.h>
+
+volatile uint8_t tickCount = 0;      // Counts Timer0 ticks
+volatile uint8_t ledActive = 0;      // LED timing flag
+
+// Timer1 ISR: runs every 1 second
+ISR(TIMER1_COMPA_vect) {
+  PORTB |= (1 << PB5);   // Turn LED on
+  tickCount = 0;
+  ledActive = 1;
+}
+
+// Timer0 ISR: 1 ms, turns LED off after 100 ms
+ISR(TIMER0_COMPA_vect) {
+  if (ledActive) {
+    tickCount++;
+    if (tickCount >= 100) {
+      PORTB &= ~(1 << PB5); // Turn LED off
+      ledActive = 0;
+    }
+  }
+}
+
+int main(void) {
+  DDRB |= (1 << PB5); // Pin 13 output
+
+  // Timer0: CTC, prescale 64, 1ms interrupt
+  TCCR0A |= (1 << WGM01);
+  TCCR0B |= (1 << CS00) | (1 << CS01);
+  TIMSK0 |= (1 << OCIE0A);
+  OCR0A = 249;
+
+  // Timer1: CTC, 1s interrupt
+  TCCR1B |= (1 << WGM12);
+  OCR1A = 15624; 
+  TCCR1B |= (1 << CS12) | (1 << CS10);
+  TIMSK1 |= (1 << OCIE1A);
+
+  sei();
+  set_sleep_mode(SLEEP_MODE_IDLE);
+
+  while (1) {
+    sleep_mode(); // Sleep until interrupt
+  }
+}
